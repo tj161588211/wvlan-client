@@ -1,4 +1,4 @@
-name: CI Build
+name: CI Build - WVLAN
 
 on:
   push:
@@ -11,43 +11,7 @@ on:
 
 jobs:
   build-client:
-    name: Build Client
-    runs-on: windows-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'src/client/package-lock.json'
-
-      - name: Install dependencies
-        working-directory: src/client
-        run: npm ci
-
-      - name: Run lint
-        working-directory: src/client
-        run: npm run lint || echo "Lint check skipped"
-
-      - name: Build client
-        working-directory: src/client
-        run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: client-build
-          path: src/client/dist/
-          retention-days: 7
-
-  build-server:
-    name: Build Server
+    name: Build WPF Client
     runs-on: windows-latest
     
     steps:
@@ -61,23 +25,37 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        working-directory: src/server
-        run: dotnet restore
+      - name: Setup C++ (vcpkg)
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '57d6645a77e70eb5d7c9e8f5e5d5e5d5e5d5e5d5'
 
-      - name: Build server
-        working-directory: src/server
-        run: dotnet build --configuration Release --no-restore
+      - name: Restore C++ dependencies
+        working-directory: wvlan-client
+        run: |
+          vcpkg install wireguard:x64-windows
+          vcpkg integrate install
 
-      - name: Upload build artifacts
+      - name: Build C++ Core
+        working-directory: wvlan-client
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+
+      - name: Build WPF Client
+        working-directory: wvlan-client
+        run: |
+          dotnet build wvlan-client.sln --configuration Release
+
+      - name: Upload Client Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: server-build
-          path: src/server/bin/Release/net8.0/
+          name: wvlan-client
+          path: wvlan-client/bin/Release/net8.0-windows/
           retention-days: 7
 
-  security-scan:
-    name: Security Scan
+  build-server:
+    name: Build Control Server
     runs-on: windows-latest
     
     steps:
@@ -86,50 +64,90 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run dependency security scan
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          args: --severity-threshold=high
+          go-version: '1.21.x'
+          cache: true
 
-      - name: Run .NET security scan
-        uses: snyk/actions/dotnet@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Restore Go dependencies
+        working-directory: control-server
+        run: go mod download
+
+      - name: Build Server
+        working-directory: control-server
+        run: |
+          go build -o bin/server.exe ./cmd/server
+
+      - name: Upload Server Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          args: --severity-threshold=high
+          name: control-server
+          path: control-server/bin/server.exe
+          retention-days: 7
 
-  code-quality:
-    name: Code Quality Check
+  build-installer:
+    name: Build Installer
     runs-on: windows-latest
+    needs: [build-client, build-server]
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SonarQube scan (if configured)
-        run: echo "SonarQube integration available when SONAR_TOKEN is set"
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Download Client Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wvlan-client
+          path: dist/client/
 
-      - name: Generate code coverage report
-        run: echo "Coverage reports will be generated in test job"
+      - name: Download Server Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: control-server
+          path: dist/server/
 
-  notify:
-    name: Notify Status
-    needs: [build-client, build-server, security-scan, code-quality]
-    if: always()
+      - name: Setup NSIS
+        uses: jasonetco/setup-nsis@v1
+
+      - name: Build Installer (NSIS)
+        working-directory: installer/nsis
+        run: |
+          makensis /V1 build.nsi
+        continue-on-error: true
+
+      - name: Build Installer (Inno Setup)
+        working-directory: installer/innosetup
+        run: |
+          iscc setup.iss
+        continue-on-error: true
+
+      - name: Upload Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: wvlan-installer
+          path: |
+            installer/nsis/output/*.exe
+            installer/innosetup/Output/*.exe
+          retention-days: 7
+
+  create-release:
+    name: Create Release
     runs-on: windows-latest
+    needs: build-installer
+    if: startsWith(github.ref, 'refs/tags/v')
     
     steps:
-      - name: Check build status
-        run: |
-          $status = "${{ needs.build-client.result }}" + "${{ needs.build-server.result }}"
-          if ($status -notmatch "success|skipped") {
-            Write-Host "Build failed or had errors"
-            exit 1
-          }
-          Write-Host "All builds completed successfully"
+      - name: Download Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: wvlan-installer
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.exe
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
