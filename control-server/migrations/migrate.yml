@@ -1,0 +1,16 @@
+migrations:
+  - up: true
+    down: false
+    file: migrations/001_create_users.sql
+  - up: true
+    down: false
+    file: migrations/002_create_devices.sql
+  - up: true
+    down: false
+    file: migrations/003_create_configs.sql
+  - up: true
+    down: false
+    file: migrations/004_create_connection_logs.sql
+  - up: true
+    down: false
+    file: migrations/005_create_indexes.sql

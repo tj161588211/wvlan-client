@@ -1,0 +1,260 @@
+syntax = "proto3";
+
+package devicemanagement;
+
+option go_package = "github.com/virtual-lan/control-server/proto";
+
+// 设备管理服务
+service DeviceService {
+  // 注册新设备
+  rpc RegisterDevice(DeviceRegisterRequest) returns (DeviceRegisterResponse);
+  
+  // 更新设备状态
+  rpc UpdateDeviceStatus(DeviceStatusUpdateRequest) returns (DeviceStatusUpdateResponse);
+  
+  // 获取设备信息
+  rpc GetDevice(DeviceInfoRequest) returns (DeviceInfoResponse);
+  
+  // 列出用户的所有设备
+  rpc ListUserDevices(UserDevicesRequest) returns (UserDevicesResponse);
+  
+  // 删除设备
+  rpc DeleteDevice(DeleteDeviceRequest) returns (DeleteDeviceResponse);
+}
+
+// 配置管理服务
+service ConfigService {
+  // 创建配置
+  rpc CreateConfig(ConfigCreateRequest) returns (ConfigCreateResponse);
+  
+  // 获取配置
+  rpc GetConfig(ConfigGetRequest) returns (ConfigGetResponse);
+  
+  // 更新配置
+  rpc UpdateConfig(ConfigUpdateRequest) returns (ConfigUpdateResponse);
+  
+  // 删除配置
+  rpc DeleteConfig(ConfigDeleteRequest) returns (ConfigDeleteResponse);
+  
+  // 发布配置到设备
+  rpc PublishConfig(ConfigPublishRequest) returns (ConfigPublishResponse);
+  
+  // 获取设备的所有配置
+  rpc GetDeviceConfigs(DeviceConfigsRequest) returns (DeviceConfigsResponse);
+}
+
+// 连接服务
+service ConnectionService {
+  // 记录连接事件
+  rpc RecordConnection(ConnectionEventRequest) returns (ConnectionEventResponse);
+  
+  // 获取连接历史
+  rpc GetConnectionHistory(ConnectionHistoryRequest) returns (ConnectionHistoryResponse);
+}
+
+// ==================== 设备相关消息 ====================
+
+message DeviceRegisterRequest {
+  string user_id = 1;
+  string name = 2;
+  string device_type = 3;
+  string os_type = 4;
+  string version = 5;
+  string mac_address = 6;
+  string public_key = 7;
+}
+
+message DeviceRegisterResponse {
+  bool success = 1;
+  string device_id = 2;
+  string message = 3;
+}
+
+message DeviceStatusUpdateRequest {
+  string device_id = 1;
+  string status = 2;  // online, offline
+  string ip_address = 3;
+}
+
+message DeviceStatusUpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeviceInfoRequest {
+  string device_id = 1;
+}
+
+message DeviceInfoResponse {
+  bool success = 1;
+  DeviceInfo device = 2;
+  string message = 3;
+}
+
+message DeviceInfo {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  string device_type = 4;
+  string os_type = 5;
+  string version = 6;
+  string ip_address = 7;
+  string mac_address = 8;
+  string status = 9;
+  string public_key = 10;
+  int64 registered_at = 11;
+  int64 last_seen = 12;
+}
+
+message UserDevicesRequest {
+  string user_id = 1;
+  string status_filter = 2;  // 可选，过滤在线/离线设备
+}
+
+message UserDevicesResponse {
+  bool success = 1;
+  repeated DeviceInfo devices = 2;
+  string message = 3;
+}
+
+message DeleteDeviceRequest {
+  string device_id = 1;
+}
+
+message DeleteDeviceResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ==================== 配置相关消息 ====================
+
+message ConfigCreateRequest {
+  string user_id = 1;
+  string device_id = 2;
+  string name = 3;
+  string description = 4;
+  string config_type = 5;  // network, security, general
+  string content = 6;      // JSON 格式
+}
+
+message ConfigCreateResponse {
+  bool success = 1;
+  string config_id = 2;
+  int32 version = 3;
+  string message = 3;
+}
+
+message ConfigGetRequest {
+  string config_id = 1;
+}
+
+message ConfigGetResponse {
+  bool success = 1;
+  ConfigInfo config = 2;
+  string message = 3;
+}
+
+message ConfigInfo {
+  string id = 1;
+  string user_id = 2;
+  string device_id = 3;
+  string name = 4;
+  string description = 5;
+  string config_type = 6;
+  string content = 7;
+  int32 version = 8;
+  bool is_active = 9;
+  int64 created_at = 10;
+  int64 published_at = 11;
+}
+
+message ConfigUpdateRequest {
+  string config_id = 1;
+  string name = 2;
+  string description = 3;
+  string content = 4;
+  bool is_active = 5;
+}
+
+message ConfigUpdateResponse {
+  bool success = 1;
+  int32 version = 2;
+  string message = 3;
+}
+
+message ConfigDeleteRequest {
+  string config_id = 1;
+}
+
+message ConfigDeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ConfigPublishRequest {
+  string config_id = 1;
+  repeated string device_ids = 2;
+}
+
+message ConfigPublishResponse {
+  bool success = 1;
+  int32 published_count = 2;
+  string message = 3;
+}
+
+message DeviceConfigsRequest {
+  string device_id = 1;
+  bool active_only = 2;
+}
+
+message DeviceConfigsResponse {
+  bool success = 1;
+  repeated ConfigInfo configs = 2;
+  string message = 3;
+}
+
+// ==================== 连接相关消息 ====================
+
+message ConnectionEventRequest {
+  string user_id = 1;
+  string device_id = 2;
+  string connection_id = 3;
+  string action = 4;      // connect, disconnect, reconnect
+  string status = 5;      // success, failed
+  string client_ip = 6;
+  string user_agent = 7;
+  string error_msg = 8;
+  int64 duration = 9;     // 毫秒
+}
+
+message ConnectionEventResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ConnectionHistoryRequest {
+  string user_id = 1;
+  string device_id = 2;
+  int32 limit = 3;
+  int32 offset = 4;
+}
+
+message ConnectionHistoryResponse {
+  bool success = 1;
+  repeated ConnectionEvent events = 2;
+  int32 total = 3;
+  string message = 4;
+}
+
+message ConnectionEvent {
+  string id = 1;
+  string user_id = 2;
+  string device_id = 3;
+  string connection_id = 4;
+  string action = 5;
+  string status = 6;
+  string client_ip = 7;
+  string error_msg = 8;
+  int64 duration = 9;
+  int64 connection_time = 10;
+}

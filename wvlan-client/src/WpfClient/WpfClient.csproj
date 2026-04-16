@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <AssemblyName>WVLAN.Client</AssemblyName>
+    <RootNamespace>WVLAN.Client</RootNamespace>
+    <Company>Hermes Research</Company>
+    <Product>WVLAN Windows Virtual LAN Client</Product>
+    <Version>1.0.0</Version>
+    <Authors>Hermes Agent</Authors>
+    <Description>WVLAN Windows 虚拟局域网客户端 - WPF GUI</Description>
+    <Copyright>Copyright © 2026 Hermes Research</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- C++/CLI Bridge Reference -->
+    <!-- Note: This requires the NativeBridge.dll to be built first -->
+    <Reference Include="NativeBridge">
+      <HintPath>..\Bridge\CSharpCLI\bin\$(Configuration)\net8.0-windows\NativeBridge.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

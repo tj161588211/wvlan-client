@@ -1,0 +1,29 @@
+# 编译产物
+bin/
+obj/
+out/
+dist/
+build/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+logs/
+
+# 配置（敏感信息）
+.env
+*.secret.*
+
+# Windows
+*.exe
+*.msi
