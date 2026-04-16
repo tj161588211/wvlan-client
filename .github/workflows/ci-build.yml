@@ -74,8 +74,6 @@ jobs:
       - name: Tidy Go module
         working-directory: control-server
         run: |
-          go get gorm.io/gorm@v1.25.5
-          go get gorm.io/driver/postgres@v1.5.4
           go mod tidy
           go mod download
           # Verify go.sum is generated

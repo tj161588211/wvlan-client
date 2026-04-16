@@ -1,4 +1,5 @@
 using WVLAN.Client.Models;
+using NativeBridge;
 
 namespace WVLAN.Client.Bridge
 {

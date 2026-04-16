@@ -1,6 +1,7 @@
 using System.Timers;
 using Serilog;
 using WVLAN.Client.Models;
+using NativeBridge;
 using Timer = System.Timers.Timer;
 
 namespace WVLAN.Client.Services

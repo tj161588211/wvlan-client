@@ -375,11 +375,5 @@ namespace WVLAN.Client.Services
             var invalidChars = Path.GetInvalidFileNameChars();
             return new string(name.Where(c => !invalidChars.Contains(c)).ToArray());
         }
-
-        private static byte[] SHA256.HashData(byte[] buffer)
-        {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            return sha256.ComputeHash(buffer);
-        }
     }
 }
