@@ -31,15 +31,15 @@
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource AccentColor}"/>
                     
-                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Ellipse Width="16" Height="16" 
-                                 Fill="{Binding ConnectionStatusColor}"
-                                 RadiusX="8" RadiusY="8"
-                                 Margin="0,0,12,0"/>
-                        <TextBlock Text="{Binding ConnectionStatusText}" 
-                                   FontSize="24"
-                                   FontWeight="Bold"/>
-                    </StackPanel>
+<StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+<Rectangle Width="16" Height="16" 
+Fill="{Binding ConnectionStatusColor}"
+RadiusX="8" RadiusY="8"
+Margin="0,0,12,0"/>
+<TextBlock Text="{Binding ConnectionStatusText}" 
+FontSize="24"
+FontWeight="Bold"/>
+</StackPanel>
 
                     <TextBlock Text="{Binding LocalAddress}" 
                                FontSize="14"
