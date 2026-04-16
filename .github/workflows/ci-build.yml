@@ -71,10 +71,16 @@ jobs:
           go-version: '1.21.x'
           cache: true
 
-      - name: Verify Go module
+      - name: Tidy Go module
         working-directory: control-server
         run: |
-          go mod verify
+          go mod tidy
+          go mod download
+
+      - name: Build Server
+        working-directory: control-server
+        run: |
+          go build -o bin/server.exe ./cmd/server
 
       - name: Build Server
         working-directory: control-server
